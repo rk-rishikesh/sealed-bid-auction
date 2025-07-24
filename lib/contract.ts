@@ -1,5 +1,5 @@
-// Base Sepolia.
-export const CONTRACT_ADDRESS = "0xf55a0FaFb22CaCF155E7fe069Cc177D2e9089EC2"
+// Base Sepolia
+export const CONTRACT_ADDRESS = "0xd2Cc6cD27ED717bdD8dc818bDeB39b29Ee4dD1FF"
 
 export const CONTRACT_ABI = [
 	{
@@ -19,73 +19,74 @@ export const CONTRACT_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint32",
-				"name": "callbackGasLimit",
-				"type": "uint32"
-			},
-			{
-				"internalType": "uint32",
-				"name": "_encryptedAt",
-				"type": "uint32"
-			},
-			{
-				"internalType": "uint32",
-				"name": "_decryptedAt",
-				"type": "uint32"
-			},
-			{
-				"internalType": "bytes",
-				"name": "condition",
-				"type": "bytes"
-			},
-			{
-				"components": [
-					{
-						"components": [
-							{
-								"internalType": "uint256[2]",
-								"name": "x",
-								"type": "uint256[2]"
-							},
-							{
-								"internalType": "uint256[2]",
-								"name": "y",
-								"type": "uint256[2]"
-							}
-						],
-						"internalType": "struct BLS.PointG2",
-						"name": "u",
-						"type": "tuple"
-					},
-					{
-						"internalType": "bytes",
-						"name": "v",
-						"type": "bytes"
-					},
-					{
-						"internalType": "bytes",
-						"name": "w",
-						"type": "bytes"
-					}
-				],
-				"internalType": "struct TypesLib.Ciphertext",
-				"name": "encryptedData",
-				"type": "tuple"
+				"internalType": "address",
+				"name": "blocklockContract",
+				"type": "address"
 			}
 		],
-		"name": "createTimelockRequestWithDirectFunding",
-		"outputs": [
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "ReentrancyGuardReentrantCall",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"indexed": false,
+				"internalType": "address",
+				"name": "winner",
+				"type": "address"
 			},
 			{
+				"indexed": false,
 				"internalType": "uint256",
-				"name": "",
+				"name": "highestBid",
 				"type": "uint256"
 			}
 		],
+		"name": "AuctionEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "bidID",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "unsealedBid",
+				"type": "uint256"
+			}
+		],
+		"name": "BidUnsealed",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "finalizeAuction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fulfillHighestBid",
+		"outputs": [],
 		"stateMutability": "payable",
 		"type": "function"
 	},
@@ -95,17 +96,6 @@ export const CONTRACT_ABI = [
 		"outputs": [],
 		"stateMutability": "payable",
 		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "blocklockSender",
-				"type": "address"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
 	},
 	{
 		"anonymous": false,
@@ -124,6 +114,44 @@ export const CONTRACT_ABI = [
 			}
 		],
 		"name": "Funded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "HighestBidFulfilled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "bidID",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			}
+		],
+		"name": "NewBid",
 		"type": "event"
 	},
 	{
@@ -180,6 +208,59 @@ export const CONTRACT_ABI = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint32",
+				"name": "callbackGasLimit",
+				"type": "uint32"
+			},
+			{
+				"components": [
+					{
+						"components": [
+							{
+								"internalType": "uint256[2]",
+								"name": "x",
+								"type": "uint256[2]"
+							},
+							{
+								"internalType": "uint256[2]",
+								"name": "y",
+								"type": "uint256[2]"
+							}
+						],
+						"internalType": "struct BLS.PointG2",
+						"name": "u",
+						"type": "tuple"
+					},
+					{
+						"internalType": "bytes",
+						"name": "v",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "w",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct TypesLib.Ciphertext",
+				"name": "sealedBid",
+				"type": "tuple"
+			}
+		],
+		"name": "placeSealedBid",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256",
 				"name": "requestId",
 				"type": "uint256"
@@ -215,6 +296,31 @@ export const CONTRACT_ABI = [
 		"type": "event"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "bidID",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "claimant",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "ReservePriceClaimed",
+		"type": "event"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -236,6 +342,19 @@ export const CONTRACT_ABI = [
 			}
 		],
 		"name": "setSubId",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_biddingEndBlock",
+				"type": "uint256"
+			}
+		],
+		"name": "startAuction",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -311,8 +430,159 @@ export const CONTRACT_ABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "withdrawRefund",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"stateMutability": "payable",
 		"type": "receive"
+	},
+	{
+		"inputs": [],
+		"name": "allBidsUnsealed",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "auctionEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "auctionStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "bidderToBidID",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "biddingEndBlock",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "bidsById",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "bidID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"components": [
+							{
+								"internalType": "uint256[2]",
+								"name": "x",
+								"type": "uint256[2]"
+							},
+							{
+								"internalType": "uint256[2]",
+								"name": "y",
+								"type": "uint256[2]"
+							}
+						],
+						"internalType": "struct BLS.PointG2",
+						"name": "u",
+						"type": "tuple"
+					},
+					{
+						"internalType": "bytes",
+						"name": "v",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "w",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct TypesLib.Ciphertext",
+				"name": "sealedBid",
+				"type": "tuple"
+			},
+			{
+				"internalType": "bytes",
+				"name": "decryptionKey",
+				"type": "bytes"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsealedBid",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "revealed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -329,7 +599,174 @@ export const CONTRACT_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "currentRequestId",
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			}
+		],
+		"name": "getBidWithBidder",
+		"outputs": [
+			{
+				"components": [
+					{
+						"components": [
+							{
+								"internalType": "uint256[2]",
+								"name": "x",
+								"type": "uint256[2]"
+							},
+							{
+								"internalType": "uint256[2]",
+								"name": "y",
+								"type": "uint256[2]"
+							}
+						],
+						"internalType": "struct BLS.PointG2",
+						"name": "u",
+						"type": "tuple"
+					},
+					{
+						"internalType": "bytes",
+						"name": "v",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "w",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct TypesLib.Ciphertext",
+				"name": "sealedBid",
+				"type": "tuple"
+			},
+			{
+				"internalType": "bytes",
+				"name": "decryptionKey",
+				"type": "bytes"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsealedBid",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_bidder",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "revealed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "bidID",
+				"type": "uint256"
+			}
+		],
+		"name": "getBidWithBidID",
+		"outputs": [
+			{
+				"components": [
+					{
+						"components": [
+							{
+								"internalType": "uint256[2]",
+								"name": "x",
+								"type": "uint256[2]"
+							},
+							{
+								"internalType": "uint256[2]",
+								"name": "y",
+								"type": "uint256[2]"
+							}
+						],
+						"internalType": "struct BLS.PointG2",
+						"name": "u",
+						"type": "tuple"
+					},
+					{
+						"internalType": "bytes",
+						"name": "v",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "w",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct TypesLib.Ciphertext",
+				"name": "sealedBid",
+				"type": "tuple"
+			},
+			{
+				"internalType": "bytes",
+				"name": "decryptionKey",
+				"type": "bytes"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsealedBid",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "bidder",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "revealed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getHighestBid",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "highestBidAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "highestBidderAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "highestBid",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -342,12 +779,25 @@ export const CONTRACT_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "getBalance",
+		"name": "highestBidder",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "address",
 				"name": "",
-				"type": "uint256"
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "highestBidPaid",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -405,6 +855,64 @@ export const CONTRACT_ABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "pendingReturns",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "RESERVE_PRICE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "revealedBidsCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "seller",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "subscriptionId",
 		"outputs": [
@@ -418,68 +926,13 @@ export const CONTRACT_ABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "totalBids",
+		"outputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
-			}
-		],
-		"name": "userRequests",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "requestedBy",
-				"type": "address"
-			},
-			{
-				"internalType": "uint32",
-				"name": "encryptedAt",
-				"type": "uint32"
-			},
-			{
-				"internalType": "uint32",
-				"name": "decryptedAt",
-				"type": "uint32"
-			},
-			{
-				"components": [
-					{
-						"components": [
-							{
-								"internalType": "uint256[2]",
-								"name": "x",
-								"type": "uint256[2]"
-							},
-							{
-								"internalType": "uint256[2]",
-								"name": "y",
-								"type": "uint256[2]"
-							}
-						],
-						"internalType": "struct BLS.PointG2",
-						"name": "u",
-						"type": "tuple"
-					},
-					{
-						"internalType": "bytes",
-						"name": "v",
-						"type": "bytes"
-					},
-					{
-						"internalType": "bytes",
-						"name": "w",
-						"type": "bytes"
-					}
-				],
-				"internalType": "struct TypesLib.Ciphertext",
-				"name": "encryptedValue",
-				"type": "tuple"
-			},
-			{
-				"internalType": "string",
-				"name": "message",
-				"type": "string"
 			}
 		],
 		"stateMutability": "view",

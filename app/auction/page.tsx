@@ -41,6 +41,7 @@ const newsItems = [
 ];
 
 const AuctionPage = () => {
+  
   const router = useRouter();
 
   const { address, isConnected } = useAccount();
