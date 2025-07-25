@@ -40,7 +40,18 @@ contract SealedBidAuction
     mapping(address => uint256) public userBidID;
     mapping(address => uint256) public pendingReturns;
     
+    // Track auctions created by each creator
+    mapping(address => uint256[]) public creatorAuctions;
+    
     uint256 public constant RESERVE_PRICE = 0.001 ether;
+
+    // Events
+    event AuctionLaunched(uint256 indexed auctionId, address indexed owner, uint256 biddingEndBlock);
+    event SealedBidPlaced(uint256 indexed auctionId, uint256 indexed requestId, address indexed bidder);
+    event BidRevealed(uint256 indexed auctionId, uint256 indexed requestId, address indexed bidder, uint256 unsealedBid);
+    event HighestBidFulfilled(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+    event RefundWithdrawn(uint256 indexed auctionId, address indexed user, uint256 amount);
+    event AuctionFinalized(uint256 indexed auctionId);
 
     modifier onlyBeforeAuctionEnds(uint256 auctionid) {
         require(block.number < auctions[auctionid].biddingEndBlock, "Auction has already ended.");
@@ -72,6 +83,8 @@ contract SealedBidAuction
         newAuction.biddingEndBlock = _biddingEndBlock;
         newAuction.owner = msg.sender;
         auctions[auctionId] = newAuction;
+        creatorAuctions[msg.sender].push(auctionId);
+        emit AuctionLaunched(auctionId, msg.sender, _biddingEndBlock);
         return auctionId;
     }
 
@@ -105,6 +118,7 @@ contract SealedBidAuction
         userBidID[msg.sender] = requestID;
         auctions[auctionId].totalBids = auctions[auctionId].totalBids + 1;
         pendingReturns[msg.sender] = RESERVE_PRICE;
+        emit SealedBidPlaced(auctionId, requestID, msg.sender);
         return requestID;
     }
 
@@ -140,6 +154,7 @@ contract SealedBidAuction
 
         // update highest bid
         updateHighestBid(bid.auctionID ,requestID, decryptedSealedBid);
+        emit BidRevealed(bid.auctionID, requestID, bid.bidder, decryptedSealedBid);
     }
 
     function updateHighestBid(uint256 auctionId, uint256 bidID, uint256 unsealedBid) internal {
@@ -161,6 +176,7 @@ contract SealedBidAuction
         require(amount > 0, "Nothing to withdraw.");
         pendingReturns[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
+        emit RefundWithdrawn(auctionId, msg.sender, amount);
     } 
 
      function fulfillHighestBid(uint256 auctionId) external payable onlyAfterAuctionEnds(auctionId) onlyAfterBidsUnsealed(auctionId) {
@@ -174,11 +190,13 @@ contract SealedBidAuction
         auctions[auctionId].highestBidPaid = true;
         pendingReturns[msg.sender] = 0;
         payable(auctions[auctionId].owner).transfer(msg.value + RESERVE_PRICE);
+        emit HighestBidFulfilled(auctionId, msg.sender, msg.value + RESERVE_PRICE);
     }
 
     function finalizeAuction(uint256 auctionId) external onlyAfterBidsUnsealed(auctionId) {
         require(!auctions[auctionId].auctionEnded, "Auction already finalised.");
         auctions[auctionId].auctionEnded = true;
+        emit AuctionFinalized(auctionId);
     }
 
     // Getter: Get auction details by auctionId
@@ -237,6 +255,11 @@ contract SealedBidAuction
     // Getter: Get the user's pending return
     function getPendingReturn(address user) external view returns (uint256) {
         return pendingReturns[user];
+    }
+
+    // Getter: Get all auction IDs created by a specific creator
+    function getCreatorAuctions(address creator) external view returns (uint256[] memory) {
+        return creatorAuctions[creator];
     }
 
 }
