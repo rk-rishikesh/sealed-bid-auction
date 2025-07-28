@@ -121,9 +121,8 @@ const AuctionPage = () => {
                     <div>
                       <button
                         type="button"
-                        onClick={() => item.auctionEnded ? null : router.push(`/auction/${item.id}`)}
-                        disabled={item.auctionEnded}
-                        className={`inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-base font-funnel-display text-gray-900 transition-colors bg-white ${!item.auctionEnded ? 'hover:border-gray-400 cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => router.push(`/auction/${item.id}`)}
+                        className={`inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-base font-funnel-display text-gray-900 transition-colors bg-white hover:border-gray-400 cursor-pointer`}
                       >
                         {!item.auctionEnded ? 'Bid' : 'Closed'}
                         {!item.auctionEnded && (

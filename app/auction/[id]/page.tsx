@@ -146,36 +146,61 @@ const BidPage = () => {
 
                                 {auction ? (
                                     <div>
-                                        <div className="mb-6 flex flex-col gap-2">
-                                            <div className="text-xl font-bold font-funnel-display text-gray-900">
-                                                Auction ID: <span className="font-normal">{auction.auctionID.toString()}</span>
-                                            </div>
-                                            <div className="text-lg font-funnel-display text-gray-700">
-                                                Bidding End Block: <span className="font-normal">{auction.biddingEndBlock.toString()}</span>
-                                            </div>
-                                            <div className="text-lg font-funnel-display text-gray-700">
-                                                Owner: <span className="font-normal">{auction.owner}</span>
-                                            </div>
+                                        <div className="mb-6">
+                                            <table className="w-full border-collapse border border-gray-300">
+                                                <tbody>
+                                                    <tr className="border-b border-gray-300">
+                                                        <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Auction ID</td>
+                                                        <td className="px-4 py-3 font-funnel-display text-gray-700">{auction.auctionID.toString()}</td>
+                                                    </tr>
+                                                    <tr className="border-b border-gray-300">
+                                                        <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Bidding End Block</td>
+                                                        <td className="px-4 py-3 font-funnel-display text-gray-700">{auction.biddingEndBlock.toString()}</td>
+                                                    </tr>
+                                                    <tr className="border-b border-gray-300">
+                                                        <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Owner</td>
+                                                        <td className="px-4 py-3 font-funnel-display text-gray-700">{auction.owner}</td>
+                                                    </tr>
+                                                    {auction.auctionEnded && (
+                                                        <>
+                                                            <tr className="border-b border-gray-300">
+                                                                <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Highest Bid</td>
+                                                                <td className="px-4 py-3 font-funnel-display text-green-600 font-bold">{ethers.formatEther(auction.highestBid)} ETH</td>
+                                                            </tr>
+                                                            <tr className="border-b border-gray-300">
+                                                                <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Winner</td>
+                                                                <td className="px-4 py-3 font-funnel-display text-gray-700 font-bold">{auction.highestBidder}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="px-4 py-3 font-funnel-display font-bold text-gray-900 bg-gray-50">Payment Status</td>
+                                                                <td className="px-4 py-3 font-funnel-display">
+                                                                    {auction.highestBidPaid ? (
+                                                                        <span className="text-green-600 font-bold">✓ Completed</span>
+                                                                    ) : (
+                                                                        <span className="text-red-600 font-bold">Pending</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        </>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                            {currentBlock < Number(auction.biddingEndBlock) ? (
+                                        {currentBlock < Number(auction.biddingEndBlock) ? (
+                                            <div className="mb-6">
+                                                <h3 className="text-xl font-bold font-funnel-display text-gray-900 mb-4">Place Your Bid</h3>
                                                 <div className="flex flex-wrap gap-4">
-                                                    {/* Timer */}
-                                                    <div className="w-full mb-4 text-lg font-funnel-display text-blue-700">
-                                                        {/* Timer logic removed as per edit hint */}
-                                                    </div>
-                                                    {/* Input Number    */}
                                                     <input
                                                         type="number"
                                                         placeholder="Enter your bid in ETH"
-                                                        className="w-full px-4 py-3 border border-gray-300 text-gray-900 font-funnel-display text-lg"
+                                                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-900 font-funnel-display text-lg"
                                                     />
-
                                                     <button
                                                         onClick={() => {
                                                             console.log("Bid placed");
                                                         }}
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center px-6 py-3 border border-gray-300 bg-white text-gray-900 font-funnel-display text-lg font-bold hover:border-gray-400 transition-colors shadow-sm"
+                                                        className="px-6 py-3 border border-gray-300 bg-white text-gray-900 font-funnel-display text-lg font-bold hover:border-gray-400 transition-colors shadow-sm"
                                                     >
                                                         Place Bid
                                                         <svg
@@ -184,7 +209,7 @@ const BidPage = () => {
                                                             viewBox="0 0 24 24"
                                                             strokeWidth={1.5}
                                                             stroke="currentColor"
-                                                            className="w-5 h-5 ml-2"
+                                                            className="w-5 h-5 ml-2 inline"
                                                         >
                                                             <path
                                                                 strokeLinecap="round"
@@ -194,72 +219,51 @@ const BidPage = () => {
                                                         </svg>
                                                     </button>
                                                 </div>
-                                            ) : (
-                                                <div className="text-lg font-funnel-display">
-                                                    <span className="text-red-500 font-bold">Bidding Closed</span>
+                                            </div>
+                                        ) : (
+                                            <div className="mb-6">
+                                                <div className="text-lg font-funnel-display text-red-500 font-bold">
+                                                    Bidding Closed
                                                 </div>
-                                            )}
-
-                                        </div>
-
-                                        {auction && isBiddingEnded() && (
-                                            <div className="mt-8 p-6 bg-gray-50 border border-gray-200">
-                                                {auction.auctionEnded ? (
-                                                    <div>
-                                                        <h3 className="text-xl font-bold font-funnel-display text-gray-900 mb-4">Auction Ended</h3>
-                                                        <div className="flex flex-col gap-2">
-                                                            <div className="text-lg font-funnel-display text-gray-700">
-                                                                Highest Bid: <span className="font-bold text-green-600">{ethers.formatEther(auction.highestBid)} ETH</span>
-                                                            </div>
-                                                            <div className="text-lg font-funnel-display text-gray-700">
-                                                                Winner: <span className="font-bold">{auction.highestBidder}</span>
-                                                            </div>
-                                                            {auction.highestBidPaid && (
-                                                                <div className="text-lg font-funnel-display text-green-600 font-bold">
-                                                                    Payment Completed ✓
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div>
-                                                        <h3 className="text-xl font-bold font-funnel-display text-gray-900 mb-4">Auction Actions</h3>
-                                                        <div className="flex flex-wrap gap-4">
-                                                            {canWithdrawRefund() !== 0 && pendingReturn !== 0 && (
-                                                                <button
-                                                                    onClick={handleWithdrawRefund}
-                                                                    disabled={loading}
-                                                                    className="px-6 py-3 bg-blue-600 text-white font-funnel-display font-bold hover:bg-blue-700 disabled:opacity-50"
-                                                                >
-                                                                    {loading ? 'Withdrawing...' : 'Withdraw Refund'}
-                                                                </button>
-                                                            )}
-
-                                                            {isHighestBidder() && !auction.highestBidPaid && (
-                                                                <button
-                                                                    onClick={handleFulfillHighestBid}
-                                                                    disabled={loading}
-                                                                    className="px-6 py-3 bg-green-600 text-white font-funnel-display font-bold hover:bg-green-700 disabled:opacity-50"
-                                                                >
-                                                                    {loading ? 'Paying...' : 'Pay Winning Bid'}
-                                                                </button>
-                                                            )}
-
-                                                            {isAuctionOwner() && !auction.auctionEnded && (
-                                                                <button
-                                                                    onClick={handleFinalizeAuction}
-                                                                    disabled={loading}
-                                                                    className="px-6 py-3 bg-blue-600 text-white font-funnel-display font-bold hover:bg-blue-700 disabled:opacity-50"
-                                                                >
-                                                                    {loading ? 'Finalizing...' : 'Finalize Auction'}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
 
+                                        {auction && isBiddingEnded() && !auction.auctionEnded && (
+                                            <div className="mb-6">
+                                                <h3 className="text-xl font-bold font-funnel-display text-gray-900 mb-4">Available Actions</h3>
+                                                <div className="flex flex-wrap gap-4">
+                                                    {canWithdrawRefund() !== 0 && pendingReturn !== 0 && (
+                                                        <button
+                                                            onClick={handleWithdrawRefund}
+                                                            disabled={loading}
+                                                            className="px-6 py-3 bg-blue-600 text-white font-funnel-display font-bold hover:bg-blue-700 disabled:opacity-50"
+                                                        >
+                                                            {loading ? 'Withdrawing...' : 'Withdraw Refund'}
+                                                        </button>
+                                                    )}
+
+                                                    {isHighestBidder() && !auction.highestBidPaid && (
+                                                        <button
+                                                            onClick={handleFulfillHighestBid}
+                                                            disabled={loading}
+                                                            className="px-6 py-3 bg-green-600 text-white font-funnel-display font-bold hover:bg-green-700 disabled:opacity-50"
+                                                        >
+                                                            {loading ? 'Paying...' : 'Pay Winning Bid'}
+                                                        </button>
+                                                    )}
+
+                                                    {isAuctionOwner() && !auction.auctionEnded && (
+                                                        <button
+                                                            onClick={handleFinalizeAuction}
+                                                            disabled={loading}
+                                                            className="px-6 py-3 bg-blue-600 text-white font-funnel-display font-bold hover:bg-blue-700 disabled:opacity-50"
+                                                        >
+                                                            {loading ? 'Finalizing...' : 'Finalize Auction'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="font-funnel-display text-lg text-gray-700">Loading auction...</div>
