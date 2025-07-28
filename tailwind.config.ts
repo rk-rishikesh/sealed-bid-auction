@@ -29,6 +29,9 @@ const config: Config = {
       },
       backgroundImage: {
         'white-pattern': "url('/assets/background/white.svg')",
+        'black-pattern': "url('/assets/background/black.jpg')",
+        'blue-pattern': "url('/assets/background/blue.jpg')",
+        'yellow-pattern': "url('/assets/background/yellow.jpg')",
       },
     },
   },

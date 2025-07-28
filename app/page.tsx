@@ -41,7 +41,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-2 md:gap-0 w-full md:w-auto">
               <Link href="/auction" className="w-full md:w-[200px]">
                 <div className="w-full md:w-[200px] py-3 text-gray-900 border border-gray-200 hover:border-gray-400 transition-colors text-center font-funnel-display">
-                  Bid Now
+                  Enter
                 </div>
               </Link>
 

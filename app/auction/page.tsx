@@ -1,44 +1,18 @@
 'use client';
-import React from 'react';
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './header';
 import { useAccount, useWalletClient } from 'wagmi';
 import Wallet from '../wallet';
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
+import { ethers } from 'ethers';
 
-// Mock data for news items
-const newsItems = [
-  {
-    id: 1,
-    title: 'Item',
-    date: 'August 02, 2025',
-  },
-  {
-    id: 2,
-    title: 'Item',
-    date: 'May 28, 2025',
-  },
-  {
-    id: 3,
-    title: 'Item',
-    date: 'May 26, 2025',
-  },
-  {
-    id: 4,
-    title: 'Item',
-    date: 'May 26, 2025',
-  },
-  {
-    id: 5,
-    title: 'Item',
-    date: 'May 20, 2025',
-  },
-  {
-    id: 6,
-    title: 'Item',
-    date: 'May 18, 2025',
-  },
-];
+type Auction = {
+  id: number;
+  title: string;
+  date: string;
+  [key: string]: any;
+};
 
 const AuctionPage = () => {
   
@@ -46,7 +20,43 @@ const AuctionPage = () => {
 
   const { address, isConnected } = useAccount();
   const [loading, setLoading] = useState(false);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const { data: walletClient } = useWalletClient();
+
+  useEffect(() => {
+    const fetchAuctions = async () => {
+      if (!walletClient || !address) return;
+      const provider = new ethers.BrowserProvider(walletClient.transport);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+      // Get current block and timestamp
+      const currentBlock = await provider.getBlockNumber();
+      const currentBlockData = await provider.getBlock(currentBlock);
+      const currentTimestamp = currentBlockData?.timestamp || Math.floor(Date.now() / 1000);
+      const secondsPerBlock = 12;
+
+      let auctionIds = [];
+      try {
+        auctionIds = await contract.getCreatorAuctions(address);
+      } catch (e) {
+        const nextAuctionId = await contract.nextAuctionId();
+        auctionIds = Array.from({ length: Number(nextAuctionId) }, (_, i) => i);
+      }
+      const auctionDetails = await Promise.all(
+        auctionIds.map(async (id: number) => {
+          const details = await contract.getAuction(id);
+          return {
+            id: Number(id),
+            title: `Auction #${id}`,
+            auctionEnded: details.auctionEnded,
+            ...details,
+          };
+        })
+      );
+      setAuctions(auctionDetails);
+    };
+    fetchAuctions();
+  }, [walletClient, address]);
 
   return (
     isConnected ? (
@@ -62,14 +72,32 @@ const AuctionPage = () => {
         {/* Grid */}
         <main className="max-w-7xl mx-auto px-4 pb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {newsItems.map((item) => {
-              // Determine status based on date
-              const auctionDate = new Date(item.date);
-              const today = new Date();
-              // Set time to 0:0:0 for comparison
-              auctionDate.setHours(0, 0, 0, 0);
-              today.setHours(0, 0, 0, 0);
-              const isBidding = auctionDate >= today;
+            {/* Fixed Launch Auction Card */}
+            <div className="flex h-40 bg-white border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:border-gray-400 transition-colors" onClick={() => router.push('/launch')}>
+              <div className="flex-shrink-0 w-40 h-40 bg-blue-600 flex items-center justify-center">
+                <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <div className="flex-1 flex flex-col justify-between p-6">
+                <div>
+                  <div className="font-bold text-lg text-gray-900 mb-2 font-funnel-display">Launch New Auction</div>
+                  <div className="text-gray-500 text-sm mb-2 font-funnel-display">Create a new sealed-bid auction</div>
+                </div>
+                <div>
+                  <button className="inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-base font-funnel-display text-gray-900 transition-colors bg-white hover:border-gray-400">
+                    Launch
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 ml-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75V17.25M17.25 6.75H6.75M17.25 6.75L6.75 17.25" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Existing auctions */}
+            {auctions.map((item) => {
+
               return (
                 <div key={item.id} className="flex h-40 bg-white border border-gray-200 overflow-hidden shadow-sm">
                   {/* Image */}
@@ -84,19 +112,21 @@ const AuctionPage = () => {
                   <div className="flex-1 flex flex-col justify-between p-6 relative">
                     <div>
                       <div className="font-bold text-lg text-gray-900 mb-2 font-funnel-display">{item.title}</div>
-                      <div className="text-gray-500 text-sm mb-2 font-funnel-display">
-                        Date: {item.date}
+                      <div className="text-sm mb-2 font-funnel-display">
+                        <span className={`font-bold ${item.auctionEnded ? 'text-red-500' : 'text-green-500'}`}>
+                          {item.auctionEnded ? 'Ended' : 'Active'}
+                        </span>
                       </div>
                     </div>
                     <div>
                       <button
                         type="button"
-                        onClick={() => isBidding && router.push(`/auction/${item.id}`)}
-                        disabled={!isBidding}
-                        className={`inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-base font-funnel-display text-gray-900 transition-colors bg-white ${isBidding ? 'hover:border-gray-400 cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                        onClick={() => item.auctionEnded ? null : router.push(`/auction/${item.id}`)}
+                        disabled={item.auctionEnded}
+                        className={`inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-base font-funnel-display text-gray-900 transition-colors bg-white ${!item.auctionEnded ? 'hover:border-gray-400 cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
                       >
-                        {isBidding ? 'Bid' : 'Closed'}
-                        {isBidding && (
+                        {!item.auctionEnded ? 'Bid' : 'Closed'}
+                        {!item.auctionEnded && (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
