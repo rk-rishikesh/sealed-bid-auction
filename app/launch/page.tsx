@@ -32,12 +32,14 @@ const BlockLockPage = () => {
       const provider = new ethers.BrowserProvider(walletClient.transport);
       const signer = await provider.getSigner();
       const currentBlock = await provider.getBlockNumber();
+      console.log(currentBlock)
       const currentBlockData = await provider.getBlock(currentBlock);
       const currentTimestamp = currentBlockData?.timestamp || Math.floor(Date.now() / 1000);
       const targetTimestamp = Math.floor(new Date(decryptionTime).getTime() / 1000);
       const secondsPerBlock = 12; // Base layer blocks are ~12 seconds
       const blocksToAdd = Math.ceil((targetTimestamp - currentTimestamp) / secondsPerBlock);
       const blockHeight = BigInt(currentBlock + blocksToAdd);
+      console.log(blockHeight)
 
       // Call launchAuction with calculated blockHeight
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);

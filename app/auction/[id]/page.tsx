@@ -6,7 +6,7 @@ import { useAccount, useWalletClient } from 'wagmi';
 import Wallet from '../../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
 import { Blocklock, encodeCiphertextToSolidity, encodeCondition } from "blocklock-js";
-import { ethers } from 'ethers';
+import { ethers, getBytes } from 'ethers';
 
 const BidPage = () => {
     const { address, isConnected } = useAccount();
@@ -16,6 +16,7 @@ const BidPage = () => {
     const [userBid, setUserBid] = useState<any>(null);
     const [pendingReturn, setPendingReturn] = useState<number>(0);
     const [loading, setLoading] = useState(false);
+    const [bidAmount, setBidAmount] = useState<string>('');
     const { data: walletClient } = useWalletClient();
     const params = useParams();
     const id = typeof params.id === 'string' ? parseInt(params.id, 10) : 0;
@@ -73,8 +74,8 @@ const BidPage = () => {
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
             const highestBid = Number(auction.highestBid);
-            const reservePrice = 0.001 * 10 ** 18; // 0.001 ETH in wei
-            const paymentAmount = highestBid - reservePrice;
+            const reservePrice = ethers.parseEther("0.001"); // 0.001 ETH in wei
+            const paymentAmount = highestBid - Number(reservePrice);
             const tx = await contract.fulfillHighestBid(id, { value: paymentAmount });
             await tx.wait();
             // Refresh data
@@ -103,6 +104,68 @@ const BidPage = () => {
             setLoading(false);
         }
     };
+
+    const handlePlaceBid = async () => {
+        if (!walletClient) return;
+        setLoading(true);
+        try {
+            const provider = new ethers.BrowserProvider(walletClient.transport);
+            const jsonProvider = new ethers.JsonRpcProvider(`https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`);
+            const signer = await provider.getSigner();
+            console.log(signer);
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            const blockHeight = auction.biddingEndBlock;
+            console.log(auction.biddingEndBlock);
+            
+            // Validate bid amount
+            if (!bidAmount || parseFloat(bidAmount) <= 0) {
+                console.error('Invalid bid amount');
+                setLoading(false);
+                return;
+            }
+            
+            // Convert ETH to wei
+            const bidAmountInWei = ethers.parseEther(bidAmount);
+            console.log(bidAmountInWei);
+            const msgBytes = ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [bidAmountInWei]);
+            const encodedMessage = getBytes(msgBytes);
+            console.log("Encoded message:", encodedMessage);
+
+            // Encrypt the encoded message usng Blocklock.js library
+            const blocklockjs = Blocklock.createBaseSepolia(jsonProvider);
+
+            const cipherMessage = blocklockjs.encrypt(encodedMessage, blockHeight);
+            console.log("Ciphertext:", cipherMessage);
+            // Set the callback gas limit and price
+            // Best practice is to estimate the callback gas limit e.g., by extracting gas reports from Solidity tests
+            const callbackGasLimit = 700_000;
+            // Based on the callbackGasLimit, we can estimate the request price by calling BlocklockSender
+            // Note: Add a buffer to the estimated request price to cover for fluctuating gas prices between blocks
+            console.log(BigInt(callbackGasLimit));
+            const [requestCallBackPrice] = await blocklockjs.calculateRequestPriceNative(BigInt(callbackGasLimit))
+            console.log(requestCallBackPrice);
+            console.log("Request CallBack price:", ethers.formatEther(requestCallBackPrice), "ETH");
+            const totalValue = BigInt(requestCallBackPrice) + ethers.parseEther("0.001");
+            console.log("Final total value:", ethers.formatEther(totalValue), "ETH");
+            const tx = await contract.placeSealedBid(
+                id,
+                callbackGasLimit,
+                encodeCiphertextToSolidity(cipherMessage),
+                { value: totalValue }
+            );
+            const receipt = await tx.wait(1);
+            if (!receipt) throw new Error("Transaction has not been mined");
+        } catch (error) {
+            console.error('Contract write failed:', error);
+            if (error instanceof Error) {
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+            }
+        } finally {
+            setLoading(false);
+        }
+
+    }
 
     // Helper functions to check user roles
     const isBiddingEnded = () => currentBlock >= Number(auction?.biddingEndBlock);
@@ -193,12 +256,16 @@ const BidPage = () => {
                                                 <div className="flex flex-wrap gap-4">
                                                     <input
                                                         type="number"
-                                                        placeholder="Enter your bid in ETH"
+                                                        step="0.001"
+                                                        min="0.001"
+                                                        placeholder="Enter your bid in ETH (e.g., 0.5)"
+                                                        value={bidAmount}
+                                                        onChange={(e) => setBidAmount(e.target.value)}
                                                         className="flex-1 px-4 py-3 border border-gray-300 text-gray-900 font-funnel-display text-lg"
                                                     />
                                                     <button
                                                         onClick={() => {
-                                                            console.log("Bid placed");
+                                                            handlePlaceBid();
                                                         }}
                                                         className="px-6 py-3 border border-gray-300 bg-white text-gray-900 font-funnel-display text-lg font-bold hover:border-gray-400 transition-colors shadow-sm"
                                                     >

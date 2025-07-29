@@ -15,7 +15,7 @@ type Auction = {
 };
 
 const AuctionPage = () => {
-  
+
   const router = useRouter();
 
   const { address, isConnected } = useAccount();
@@ -29,19 +29,11 @@ const AuctionPage = () => {
       const provider = new ethers.BrowserProvider(walletClient.transport);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-      // Get current block and timestamp
-      const currentBlock = await provider.getBlockNumber();
-      const currentBlockData = await provider.getBlock(currentBlock);
-      const currentTimestamp = currentBlockData?.timestamp || Math.floor(Date.now() / 1000);
-      const secondsPerBlock = 12;
-
       let auctionIds = [];
-      try {
-        auctionIds = await contract.getCreatorAuctions(address);
-      } catch (e) {
-        const nextAuctionId = await contract.nextAuctionId();
-        auctionIds = Array.from({ length: Number(nextAuctionId) }, (_, i) => i);
-      }
+
+      const nextAuctionId = await contract.nextAuctionId();
+      auctionIds = Array.from({ length: Number(nextAuctionId) }, (_, i) => i);
+
       const auctionDetails = await Promise.all(
         auctionIds.map(async (id: number) => {
           const details = await contract.getAuction(id);
@@ -53,6 +45,7 @@ const AuctionPage = () => {
           };
         })
       );
+      console.log(auctionDetails);
       setAuctions(auctionDetails);
     };
     fetchAuctions();
