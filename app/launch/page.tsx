@@ -37,9 +37,11 @@ const BlockLockPage = () => {
       // Call launchAuction with calculated blockHeight
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const tx = await contract.launchAuction(blockHeight);
+      console.log(tx);
       router.push('/auction');
     } catch (err) {
       let errorMsg = 'Transaction failed';
+      console.log(errorMsg);
       if (err instanceof Error) errorMsg = err.message;
       // Optionally: display errorMsg in the UI if you want
     } finally {

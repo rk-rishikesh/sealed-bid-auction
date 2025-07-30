@@ -50,6 +50,7 @@ const BidPage = () => {
                 if (Number(userBidIdResult) > 0) {
                     const userBidData = await contract.getBid(userBidIdResult);
                     setUserBid(userBidData);
+                    console.log(userBid)
                 }
                 const pendingReturnResult = await contract.getPendingReturn(address);
                 setPendingReturn(Number(pendingReturnResult));
