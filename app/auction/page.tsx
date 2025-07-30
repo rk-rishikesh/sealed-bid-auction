@@ -6,12 +6,13 @@ import { useAccount, useWalletClient } from 'wagmi';
 import Wallet from '../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
 import { ethers } from 'ethers';
+import Image from 'next/image';
 
 type Auction = {
   id: number;
   title: string;
   date: string;
-  [key: string]: any;
+  auctionEnded?: boolean;
 };
 
 const AuctionPage = () => {
@@ -19,7 +20,6 @@ const AuctionPage = () => {
   const router = useRouter();
 
   const { address, isConnected } = useAccount();
-  const [loading, setLoading] = useState(false);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const { data: walletClient } = useWalletClient();
 
@@ -95,9 +95,11 @@ const AuctionPage = () => {
                 <div key={item.id} className="flex h-40 bg-white border border-gray-200 overflow-hidden shadow-sm">
                   {/* Image */}
                   <div className="flex-shrink-0 w-40 h-40 bg-gray-100 flex items-center justify-center">
-                    <img
+                    <Image
                       src={item.id % 2 === 0 ? '/assets/images/dark.jpg' : '/assets/images/light.jpg'}
                       alt="Auction visual"
+                      width={160}
+                      height={160}
                       className="object-contain w-40 h-40"
                     />
                   </div>

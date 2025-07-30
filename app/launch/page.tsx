@@ -3,26 +3,19 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useAccount, useWalletClient } from 'wagmi';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
-import Header from './header';
 import Wallet from '../wallet';
 import { ethers } from 'ethers';
 import { useRouter } from 'next/navigation';
 
 const BlockLockPage = () => {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const router = useRouter();
   const [decryptionTime, setDecryptionTime] = useState('');
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<null | 'pending' | 'success' | 'error'>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleLaunchAuction = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('pending');
-    setError(null);
-    setTxHash(null);
     setLoading(true);
     try {
       if (!walletClient) throw new Error('Wallet not connected');
@@ -44,12 +37,11 @@ const BlockLockPage = () => {
       // Call launchAuction with calculated blockHeight
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const tx = await contract.launchAuction(blockHeight);
-      setTxHash(tx.hash);
-      setStatus('success');
       router.push('/auction');
-    } catch (err: any) {
-      setError(err?.message || 'Transaction failed');
-      setStatus('error');
+    } catch (err) {
+      let errorMsg = 'Transaction failed';
+      if (err instanceof Error) errorMsg = err.message;
+      // Optionally: display errorMsg in the UI if you want
     } finally {
       setLoading(false);
     }

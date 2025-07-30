@@ -5,15 +5,27 @@ import { useParams } from 'next/navigation';
 import { useAccount, useWalletClient } from 'wagmi';
 import Wallet from '../../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
-import { Blocklock, encodeCiphertextToSolidity, encodeCondition } from "blocklock-js";
+import { Blocklock, encodeCiphertextToSolidity } from "blocklock-js";
 import { ethers, getBytes } from 'ethers';
+import Image from 'next/image';
+
+interface Auction {
+  auctionID: number;
+  biddingEndBlock: number;
+  owner: string;
+  highestBid: string;
+  highestBidder: string;
+  auctionEnded: boolean;
+  highestBidPaid: boolean;
+  title: string;
+}
 
 const BidPage = () => {
     const { address, isConnected } = useAccount();
-    const [auction, setAuction] = useState<any>(null);
+    const [auction, setAuction] = useState<Auction | null>(null);
     const [currentBlock, setCurrentBlock] = useState<number>(0);
     const [userBidId, setUserBidId] = useState<number | null>(null);
-    const [userBid, setUserBid] = useState<any>(null);
+    const [userBid, setUserBid] = useState<unknown>(null);
     const [pendingReturn, setPendingReturn] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const [bidAmount, setBidAmount] = useState<string>('');
@@ -43,6 +55,7 @@ const BidPage = () => {
                 setPendingReturn(Number(pendingReturnResult));
             } catch (e) {
                 // User hasn't bid
+                console.log(e);
             }
         };
         fetchAuction();
@@ -59,8 +72,12 @@ const BidPage = () => {
             await tx.wait();
             // Refresh data
             window.location.reload();
-        } catch (err: any) {
-            console.error('Withdraw failed:', err.message);
+        } catch (err) {
+            if (err instanceof Error) {
+                console.error('Withdraw failed:', err.message);
+            } else {
+                console.error('Withdraw failed:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -73,15 +90,19 @@ const BidPage = () => {
             const provider = new ethers.BrowserProvider(walletClient.transport);
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            const highestBid = Number(auction.highestBid);
+            const highestBid = Number(auction?.highestBid);
             const reservePrice = ethers.parseEther("0.001"); // 0.001 ETH in wei
             const paymentAmount = highestBid - Number(reservePrice);
             const tx = await contract.fulfillHighestBid(id, { value: paymentAmount });
             await tx.wait();
             // Refresh data
             window.location.reload();
-        } catch (err: any) {
-            console.error('Fulfill failed:', err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error('Fulfill failed:', err.message);
+            } else {
+                console.error('Fulfill failed:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -98,8 +119,12 @@ const BidPage = () => {
             await tx.wait();
             // Refresh data
             window.location.reload();
-        } catch (err: any) {
-            console.error('Finalize failed:', err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error('Finalize failed:', err.message);
+            } else {
+                console.error('Finalize failed:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -114,8 +139,9 @@ const BidPage = () => {
             const signer = await provider.getSigner();
             console.log(signer);
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            const blockHeight = auction.biddingEndBlock;
-            console.log(auction.biddingEndBlock);
+            // Use BigInt for blockHeight, defaulting to 0 if auction is null
+            const blockHeight = BigInt(auction?.biddingEndBlock ?? 0);
+            console.log(auction?.biddingEndBlock);
             
             // Validate bid amount
             if (!bidAmount || parseFloat(bidAmount) <= 0) {
@@ -186,7 +212,7 @@ const BidPage = () => {
                                 Auction <span className="font-bold">Details</span>
                             </h1>
                             <p className="text-gray-500 text-lg max-w-2xl">
-                                Randamu's Blocklock Encryption keeps your bid encrypted till the auction ends.
+                                Randamu&apos;s Blocklock Encryption keeps your bid encrypted till the auction ends.
                             </p>
                         </div>
                         {/* Two-column layout */}
@@ -194,10 +220,12 @@ const BidPage = () => {
                             {/* Left: Large Image */}
                             <div className="w-1/2 flex items-center justify-start">
                                 <div className="max-w-md aspect-square bg-blue-600 flex items-center justify-center overflow-hidden">
-                                    <img
+                                    <Image
                                         src={id % 2 === 0 ? '/assets/images/dark.jpg' : '/assets/images/light.jpg'}
-                                        alt={auction?.title}
+                                        alt={auction?.title || ''}
                                         className="object-contain w-full h-full"
+                                        width={400}
+                                        height={400}
                                     />
                                 </div>
                             </div>
@@ -309,7 +337,7 @@ const BidPage = () => {
                                                         </button>
                                                     )}
 
-                                                    {isHighestBidder() && !auction.highestBidPaid && (
+                                                    {isHighestBidder() && !auction?.highestBidPaid && (
                                                         <button
                                                             onClick={handleFulfillHighestBid}
                                                             disabled={loading}
@@ -319,7 +347,7 @@ const BidPage = () => {
                                                         </button>
                                                     )}
 
-                                                    {isAuctionOwner() && !auction.auctionEnded && (
+                                                    {isAuctionOwner() && !auction?.auctionEnded && (
                                                         <button
                                                             onClick={handleFinalizeAuction}
                                                             disabled={loading}
