@@ -13,6 +13,19 @@ const BlockLockPage = () => {
   const router = useRouter();
   const [decryptionTime, setDecryptionTime] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [auctionId, setAuctionId] = useState<string | null>(null);
+
+  const handleNavigateToAuction = () => {
+    if (auctionId) {
+      router.push(`/auction/${auctionId}`);
+    }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setAuctionId(null);
+  };
 
   const handleLaunchAuction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +42,7 @@ const BlockLockPage = () => {
       const currentBlockData = await provider.getBlock(currentBlock);
       const currentTimestamp = currentBlockData?.timestamp || Math.floor(Date.now() / 1000);
       const targetTimestamp = Math.floor(new Date(decryptionTime).getTime() / 1000);
-      const secondsPerBlock = 12; // Base layer blocks are ~12 seconds
+      const secondsPerBlock = 2; // Base layer blocks are ~2 seconds
       const blocksToAdd = Math.ceil((targetTimestamp - currentTimestamp) / secondsPerBlock);
       const blockHeight = BigInt(currentBlock + blocksToAdd);
       console.log(blockHeight)
@@ -38,7 +51,12 @@ const BlockLockPage = () => {
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const tx = await contract.launchAuction(blockHeight);
       console.log(tx);
-      router.push('/auction');
+      
+      // Get the auction ID from the transaction receipt
+      const receipt = await tx.wait();
+      const auctionIdFromTx = receipt.logs[0]?.args?.auctionId?.toString();
+      setAuctionId(auctionIdFromTx || 'Unknown');
+      setShowPopup(true);
     } catch (err) {
       let errorMsg = 'Transaction failed';
       console.log(errorMsg);
@@ -106,6 +124,28 @@ const BlockLockPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Success Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+          <div className="text-center">
+            <h2 className="text-4xl font-funnel-display text-white mb-8">
+              Auction <span className="font-bold">Created</span>
+            </h2>
+            <div className="mb-4">
+              <p className="text-6xl font-bold text-white mb-2">{auctionId}</p>
+              <p className="text-sm text-white font-funnel-display">AUCTION ID</p>
+            </div>
+            <button
+              onClick={handleNavigateToAuction}
+              className="bg-blue-600 text-white px-8 py-3 font-funnel-display text-sm uppercase tracking-wide hover:bg-blue-700 transition-colors"
+              style={{ borderRadius: 0 }}
+            >
+              View Auction
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   ) : <Wallet />;
 };
