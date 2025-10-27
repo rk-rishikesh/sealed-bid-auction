@@ -22,10 +22,6 @@ const BlockLockPage = () => {
     }
   };
 
-  const handleClosePopup = () => {
-    setShowPopup(false);
-    setAuctionId(null);
-  };
 
   const handleLaunchAuction = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -232,7 +232,6 @@ const AuctionPage = () => {
                 const biddingEnded = currentBlock >= Number(item.biddingEndBlock);
                 const isActive = !biddingEnded && !item.auctionEnded;
                 const isBiddingClosed = biddingEnded && !item.auctionEnded;
-                const isEnded = item.auctionEnded;
 
                 return (
                   <div key={item.id} className="flex h-44 bg-white border border-gray-200 overflow-hidden shadow-sm">
