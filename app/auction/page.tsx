@@ -38,11 +38,12 @@ const AuctionPage = () => {
     const fetchAuctions = async () => {
       if (!walletClient || !address) return;
       setLoading(true);
+      const JsonProvider = new ethers.JsonRpcProvider(`https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`);
       const provider = new ethers.BrowserProvider(walletClient.transport);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
       // Get current block number
-      const blockNumber = await provider.getBlockNumber();
+      const blockNumber = await JsonProvider.getBlockNumber();
       setCurrentBlock(blockNumber);
       console.log('Current block number:', blockNumber);
 

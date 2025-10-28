@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Header from "../header";
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAccount, useWalletClient } from 'wagmi';
 import Wallet from '../../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
@@ -21,6 +21,7 @@ interface Auction {
 }
 
 const BidPage = () => {
+    const router = useRouter();
     const { address, isConnected } = useAccount();
     const [auction, setAuction] = useState<Auction | null>(null);
     const [currentBlock, setCurrentBlock] = useState<number>(0);
@@ -29,20 +30,27 @@ const BidPage = () => {
     const [pendingReturn, setPendingReturn] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const [bidAmount, setBidAmount] = useState<string>('');
+    const [showBidSuccessPopup, setShowBidSuccessPopup] = useState(false);
     const { data: walletClient } = useWalletClient();
     const params = useParams();
     const id = typeof params.id === 'string' ? parseInt(params.id, 10) : 0;
+
+    const handleReturnToAuctions = () => {
+        router.push('/auction');
+    };
 
     useEffect(() => {
         const fetchAuction = async () => {
             if (!walletClient || !address) return;
             const provider = new ethers.BrowserProvider(walletClient.transport);
+            const JsonProvider = new ethers.JsonRpcProvider(`https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`);
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
             const auctionData = await contract.getAuction(id);
             setAuction(auctionData);
-            const blockNumber = await provider.getBlockNumber();
+            const blockNumber = await JsonProvider.getBlockNumber();
             setCurrentBlock(blockNumber);
-
+            console.log(blockNumber)
+            console.log(Number(auctionData?.biddingEndBlock))
             // Fetch user's bid info
             try {
                 const userBidIdResult = await contract.getUserBidId(address);
@@ -182,6 +190,9 @@ const BidPage = () => {
             );
             const receipt = await tx.wait(1);
             if (!receipt) throw new Error("Transaction has not been mined");
+            
+            // Show success popup
+            setShowBidSuccessPopup(true);
         } catch (error) {
             console.error('Contract write failed:', error);
             if (error instanceof Error) {
@@ -196,22 +207,34 @@ const BidPage = () => {
 
     // Helper functions to check user roles
     const isBiddingEnded = () => currentBlock >= Number(auction?.biddingEndBlock);
+    console.log(currentBlock)
+    console.log(Number(auction?.biddingEndBlock))
     const isHighestBidder = () => address === auction?.highestBidder;
     const isAuctionOwner = () => address === auction?.owner;
     const hasUserBid = () => userBidId && userBidId > 0;
     const canWithdrawRefund = () => hasUserBid() && !isHighestBidder();
 
     return (
-        isConnected ? (
-            <div>
-                <Header />
-                <div className="pt-24 min-h-screen bg-white-pattern font-sans flex flex-col items-center py-12 px-4">
-                    <div className="w-full max-w-6xl bg-white">
+        <div>
+            {isConnected ? (
+                <>
+                    <Header />
+                    <div className="pt-24 min-h-screen bg-white-pattern font-sans flex flex-col items-center py-12 px-4">
+                        <div className="w-full max-w-6xl bg-white">
                         {/* Section Title and Subtitle */}
                         <div className="mb-10">
-                            <h1 className="text-5xl sm:text-6xl font-funnel-display font-light text-gray-900 mb-4">
-                                Auction <span className="font-bold">Details</span>
-                            </h1>
+                            <div className="flex items-center justify-between mb-4">
+                                <h1 className="text-5xl sm:text-6xl font-funnel-display font-light text-gray-900">
+                                    Auction <span className="font-bold">Details</span>
+                                </h1>
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/auction')}
+                                    className="px-4 py-2 border border-gray-300 bg-white text-gray-900 font-funnel-display hover:border-gray-400"
+                                >
+                                    Back to Auctions
+                                </button>
+                            </div>
                             <p className="text-gray-500 text-lg max-w-2xl">
                                 Randamu&apos;s Blocklock Encryption keeps your bid encrypted till the auction ends.
                             </p>
@@ -366,10 +389,34 @@ const BidPage = () => {
                                 )}
                             </div>
                         </div>
+                        </div>
+                    </div>
+                </>
+            ) : <Wallet />}
+            
+            {/* Bid Success Popup */}
+            {showBidSuccessPopup && (
+                <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+                    <div className="text-center">
+                        <h2 className="text-4xl font-funnel-display text-white mb-8">
+                            Bid <span className="font-bold">Placed</span>
+                        </h2>
+                        <div className="mb-4">
+                            <p className="text-6xl font-bold text-white mb-2">✓</p>
+                            <p className="text-sm text-white font-funnel-display">SUCCESS</p>
+                        </div>
+                        <button
+                            onClick={handleReturnToAuctions}
+                            className="bg-blue-600 text-white px-8 py-3 font-funnel-display text-sm uppercase tracking-wide hover:bg-blue-700 transition-colors"
+                            style={{ borderRadius: 0 }}
+                        >
+                            Return to Auctions
+                        </button>
                     </div>
                 </div>
-            </div>
-        ) : <Wallet />)
+            )}
+        </div>
+    );
 };
 
 export default BidPage;
