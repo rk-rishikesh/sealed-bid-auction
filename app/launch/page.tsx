@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useAccount, useWalletClient } from 'wagmi';
+import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
 import Wallet from '../wallet';
 import { ethers } from 'ethers';
@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 
 const BlockLockPage = () => {
   const { isConnected } = useAccount();
+  const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
   const router = useRouter();
   const [decryptionTime, setDecryptionTime] = useState('');
@@ -63,7 +64,9 @@ const BlockLockPage = () => {
     }
   };
 
-  return isConnected ? (
+  const isOnBaseSepolia = chainId === 84532;
+
+  return isConnected && isOnBaseSepolia ? (
     <div className="bg-black-pattern bg-cover bg-center min-h-screen">
       <div className="flex flex-col sm:flex-row h-auto sm:h-screen font-sans">
         <div className="hidden sm:block sm:w-[30%] sm:h-screen relative">

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './header';
-import { useAccount, useWalletClient } from 'wagmi';
+import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import Wallet from '../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
 import { ethers } from 'ethers';
@@ -27,6 +27,7 @@ const AuctionPage = () => {
   const router = useRouter();
 
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'bidding-closed' | 'ended' | 'my-auctions'>('active');
@@ -125,8 +126,10 @@ const AuctionPage = () => {
 
   const filteredAuctions = getFilteredAuctions();
 
+  const isOnBaseSepolia = chainId === 84532;
+
   return (
-    isConnected ? (
+    isConnected && isOnBaseSepolia ? (
       <div className="min-h-screen bg-white-pattern font-sans">
         {/* Header */}
         <Header />

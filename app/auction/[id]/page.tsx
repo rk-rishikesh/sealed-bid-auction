@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Header from "../header";
 import { useParams, useRouter } from 'next/navigation';
-import { useAccount, useWalletClient } from 'wagmi';
+import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import Wallet from '../../wallet';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/contract';
 import { Blocklock, encodeCiphertextToSolidity } from "blocklock-js";
@@ -23,10 +23,10 @@ interface Auction {
 const BidPage = () => {
     const router = useRouter();
     const { address, isConnected } = useAccount();
+    const chainId = useChainId();
     const [auction, setAuction] = useState<Auction | null>(null);
     const [currentBlock, setCurrentBlock] = useState<number>(0);
     const [userBidId, setUserBidId] = useState<number | null>(null);
-    const [userBid, setUserBid] = useState<unknown>(null);
     const [pendingReturn, setPendingReturn] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const [bidAmount, setBidAmount] = useState<string>('');
@@ -46,20 +46,14 @@ const BidPage = () => {
             const JsonProvider = new ethers.JsonRpcProvider(`https://base-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`);
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
             const auctionData = await contract.getAuction(id);
+            console.log(auctionData)
             setAuction(auctionData);
             const blockNumber = await JsonProvider.getBlockNumber();
             setCurrentBlock(blockNumber);
-            console.log(blockNumber)
-            console.log(Number(auctionData?.biddingEndBlock))
             // Fetch user's bid info
             try {
                 const userBidIdResult = await contract.getUserBidId(address);
                 setUserBidId(Number(userBidIdResult));
-                if (Number(userBidIdResult) > 0) {
-                    const userBidData = await contract.getBid(userBidIdResult);
-                    setUserBid(userBidData);
-                    console.log(userBid)
-                }
                 const pendingReturnResult = await contract.getPendingReturn(address);
                 setPendingReturn(Number(pendingReturnResult));
             } catch (e) {
@@ -214,9 +208,11 @@ const BidPage = () => {
     const hasUserBid = () => userBidId && userBidId > 0;
     const canWithdrawRefund = () => hasUserBid() && !isHighestBidder();
 
+    const isOnBaseSepolia = chainId === 84532;
+
     return (
         <div>
-            {isConnected ? (
+            {isConnected && isOnBaseSepolia ? (
                 <>
                     <Header />
                     <div className="pt-24 min-h-screen bg-white-pattern font-sans flex flex-col items-center py-12 px-4">
